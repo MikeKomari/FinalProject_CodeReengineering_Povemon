@@ -1,5 +1,8 @@
 package povemon;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import interfaces.AdditionalPovemonInfo;
 import interfaces.Burnable;
 import interfaces.Poisonable;
@@ -19,6 +22,21 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
 	
 	private boolean isBurned;
     private boolean isPoisoned;
+    
+    private Integer STATUS_DAMAGE = 5;
+    
+    @FunctionalInterface
+    private interface PovemonFactory {
+        Povemon create(String name, Integer hp, Integer attack, Integer defense, Integer speed, String type, Integer price);
+    }
+    
+    private static final Map<String, PovemonFactory> typeFactoryMap = new HashMap<>();
+
+    static {
+        typeFactoryMap.put(FIRE, FireType::new);
+        typeFactoryMap.put(WATER, WaterType::new);
+        typeFactoryMap.put(GRASS, GrassType::new);
+    }
 	
 	public Povemon(String name, Integer hp, Integer attack, Integer defense, Integer speed, String type, Integer price) {
 		super(name);
@@ -142,10 +160,10 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
 	}
     public void takeStatusEffectDamage() {
         if (isBurned) {
-            this.damaged("burned", 5 * 2);
+            this.damaged("burned", STATUS_DAMAGE * 2);
         }
         if (isPoisoned) {
-            this.damaged("poisoned", 5);
+            this.damaged("poisoned", STATUS_DAMAGE);
         }
     }
 
@@ -184,13 +202,7 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
     }
 
     public static Povemon createPovemon(String name) {
-        int index = -1;
-        for (int i = 0; i < AdditionalPovemonInfo.povemonNameList.length; i++) {
-            if (AdditionalPovemonInfo.povemonNameList[i].equalsIgnoreCase(name)) {
-                index = i;
-                break;
-            }
-        }
+        int index = findPokemonInfoByIndex(name);
         if (index == -1) return null;
         String type = AdditionalPovemonInfo.povemonTypeList[index];
         Integer hp = AdditionalPovemonInfo.povemonStatList[index][0];
@@ -198,15 +210,37 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
         Integer defense = AdditionalPovemonInfo.povemonStatList[index][2];
         Integer speed = AdditionalPovemonInfo.povemonStatList[index][3];
         Integer price = AdditionalPovemonInfo.povemonPriceList[index];
-        switch (type) {
-            case FIRE: 
-            	return new FireType(name, hp, attack, defense, speed, type, price);
-            case WATER: 
-            	return new WaterType(name, hp, attack, defense, speed, type, price);
-            case GRASS: 
-            	return new GrassType(name, hp, attack, defense, speed, type, price);
-            default: 
-            	return null;
+        PovemonFactory factory = typeFactoryMap.get(type);
+        return (factory != null) ? factory.create(name, hp, attack, defense, speed, type, price) : null;
+    }
+    
+    private static int findPokemonInfoByIndex(String name) {
+    	int index = -1;
+        for (int i = 0; i < AdditionalPovemonInfo.povemonNameList.length; i++) {
+            if (AdditionalPovemonInfo.povemonNameList[i].equalsIgnoreCase(name)) {
+                index = i;
+                break;
+            }
         }
+        
+        return index;
+    }
+     
+    public void reset() {
+        this.currHp = this.hp; 
+        this.isAlive = true;
+    }
+    
+    public String getBattleStatus(Povemon currentInBattle) {
+        if (!this.getIsAlive()) return "Fainted";
+        if (this.equals(currentInBattle)) return "In Battle";
+        return "Available";
+    }
+
+    public String getEffects() {
+        String effects = "";
+        if (this instanceof Poisonable && ((Poisonable) this).isPoisoned()) effects += "Poisoned ";
+        if (this instanceof Burnable && ((Burnable) this).isBurned()) effects += "Burned ";
+        return effects.isEmpty() ? "None" : effects.trim();
     }
 }

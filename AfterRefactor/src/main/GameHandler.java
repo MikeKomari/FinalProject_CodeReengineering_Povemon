@@ -1,5 +1,11 @@
 package main;
 
+import java.util.Map;
+
+import actions.FightAction;
+import actions.RunAction;
+import actions.SwapAction;
+import interfaces.BattleAction;
 import interfaces.Utility;
 import person.Enemy;
 import person.Person;
@@ -7,11 +13,16 @@ import person.Player;
 import povemon.Povemon;
 
 public class GameHandler {
-	private static GameUI ui;
+	private static GameUI ui = new GameUI();
 	private Povemon playerCurrentPovemon;
 	private Povemon enemyCurrentPovemon;
 	private static Player player;
 	
+	private final Map<String, BattleAction> actionMap = Map.of(
+		    "1", new FightAction(),
+		    "2", new RunAction(),
+		    "3", new SwapAction()
+	);
 	
 	public boolean promptForNextBattle() {
 	    while (true) {
@@ -24,54 +35,30 @@ public class GameHandler {
 	}
 	
 	public boolean handlePlayerAction(String action, Player player, Enemy enemy) {
-	    switch (action) {
-	        case "1":
-	        	Utility.clearScreen();
-	            fight();
-	            
-	            if(!playerCurrentPovemon.getIsAlive()) {
-	            	if(player.leftAlive()) handlePlayerAction("3", player, enemy);
-	            }
-	            
-	            if(!enemyCurrentPovemon.getIsAlive()) {
-	            	Povemon nextPovemon = enemy.switchNextPovemon();
-	            	if(nextPovemon != null) enemyCurrentPovemon = enemy.switchNextPovemon();
-	            }
-
-	            break;
-
-	        case "2":
-	            System.out.println(" You ran away...");
-	            return true;
-
-	        case "3":
-	        	int index = player.swapPovemon(playerCurrentPovemon);
-	        	if(index != -1) {
-	        		playerCurrentPovemon = player.getTeam().get(index);
-	        	}
-	            break;
-
-	        default:
-	            System.out.println(" Invalid Choice!");
-	            Utility.pressEnter();
-	            break;
+		BattleAction selectedAction = actionMap.get(action);
+	    
+	    if (selectedAction != null) {
+	        return selectedAction.execute(player, enemy, this);
+	    } else {
+	        System.out.println(" Invalid Choice!");
+	        Utility.pressEnter();
+	        return false;
 	    }
-	    return false;
 	}
 	
 	public void fight() {
-		if(playerCurrentPovemon.getSpeed() >= enemyCurrentPovemon.getSpeed()) {
-			playerCurrentPovemon.attack(enemyCurrentPovemon);
+		if(getPlayerCurrentPovemon().getSpeed() >= getEnemyCurrentPovemon().getSpeed()) {
+			getPlayerCurrentPovemon().attack(getEnemyCurrentPovemon());
 			
-			if(enemyCurrentPovemon.getIsAlive()) {
-				enemyCurrentPovemon.attack(playerCurrentPovemon);							
+			if(getEnemyCurrentPovemon().getIsAlive()) {
+				getEnemyCurrentPovemon().attack(getPlayerCurrentPovemon());							
 			}
 		}
 		else {
-			enemyCurrentPovemon.attack(playerCurrentPovemon);	
+			getEnemyCurrentPovemon().attack(getPlayerCurrentPovemon());	
 			
-			if(playerCurrentPovemon.getIsAlive()) {
-				playerCurrentPovemon.attack(enemyCurrentPovemon);
+			if(getPlayerCurrentPovemon().getIsAlive()) {
+				getPlayerCurrentPovemon().attack(getEnemyCurrentPovemon());
 			}
 		}
 	}
@@ -82,12 +69,12 @@ public class GameHandler {
 	    	Utility.clearScreen();
 	        Enemy enemy = Enemy.createEnemy(player);
 	        player.resetTeam();
-	        enemyCurrentPovemon = enemy.getTeam().firstElement();
-	        playerCurrentPovemon = player.getTeam().firstElement();
+	        setEnemyCurrentPovemon(enemy.getTeam().firstElement());
+	        setPlayerCurrentPovemon(player.getTeam().firstElement());
 	        boolean exitBattle = false;
 	        boolean firstTurn = true;
 	        while (!exitBattle) {
-	        	ui.displayBattleScreen(player, enemy, playerCurrentPovemon, enemyCurrentPovemon);
+	        	ui.displayBattleScreen(player, enemy, getPlayerCurrentPovemon(), getEnemyCurrentPovemon());
 	            if (firstTurn) {handleFirstTurn(player, enemy);firstTurn = false;}
 	            String winner = checkWinner();
 	            if (processBattleOutcome(player, enemy, winner)) {exitBattle = true;break;}
@@ -99,7 +86,7 @@ public class GameHandler {
 	}
 	
 	public void handleFirstTurn(Player player, Enemy enemy) {
-	    String playerLine = player.voiceLines(playerCurrentPovemon);
+	    String playerLine = player.voiceLines(getPlayerCurrentPovemon());
 	    String enemyLine = enemy.voiceLines(player);
 
 	    if (!playerLine.isEmpty()) {
@@ -122,21 +109,21 @@ public class GameHandler {
 	    return true;
 	}
 	
-	public void modifyTeam() {
-        while (true) {
-            player.seeAllPovemon();
-            ui.showTeamModificationMenu();
-            String choice = Utility.scan.nextLine();
-            if (choice.equals("1")) {
-                player.insertPovemon();
-            } else if (choice.equals("2")) {
-                break;
-            } else {
-                Utility.showError("Invalid Choice!");
-            }
-            Utility.pressEnter();
-        }
-    }
+	public void modifyTeam(Player player) {
+	    while (true) {
+	        player.seeAllPovemon();
+	        ui.showTeamModificationMenu();
+	        String choice = Utility.scan.nextLine();
+	        if (choice.equals("1")) {
+	            player.insertPovemon();
+	        } else if (choice.equals("2")) {
+	            break;
+	        } else {
+	            Utility.showError("Invalid Choice!");
+	        }
+	        Utility.pressEnter();
+	    }
+	}
 
 	
 	public static void battleConclusion(Person winner, Person loser) {
@@ -150,17 +137,33 @@ public class GameHandler {
 	}
 	
 	public String checkWinner() {
-		if(!playerCurrentPovemon.getIsAlive() && 
-				enemyCurrentPovemon.getIsAlive()) return "enemy";
-		else if (!enemyCurrentPovemon.getIsAlive() &&
-				playerCurrentPovemon.getIsAlive()) return "player";
+		if(!getPlayerCurrentPovemon().getIsAlive() && 
+				getEnemyCurrentPovemon().getIsAlive()) return "enemy";
+		else if (!getEnemyCurrentPovemon().getIsAlive() &&
+				getPlayerCurrentPovemon().getIsAlive()) return "player";
 		else return "none";
 	}
 	
 	
 	public String getPlayerAction() {
-	    if (!playerCurrentPovemon.getIsAlive()) return "3";
+	    if (!getPlayerCurrentPovemon().getIsAlive()) return "3";
 	    System.out.print(" Choose an action [1-3]: ");
 	    return Utility.scan.nextLine();
+	}
+
+	public Povemon getEnemyCurrentPovemon() {
+		return enemyCurrentPovemon;
+	}
+
+	public void setEnemyCurrentPovemon(Povemon enemyCurrentPovemon) {
+		this.enemyCurrentPovemon = enemyCurrentPovemon;
+	}
+
+	public Povemon getPlayerCurrentPovemon() {
+		return playerCurrentPovemon;
+	}
+
+	public void setPlayerCurrentPovemon(Povemon playerCurrentPovemon) {
+		this.playerCurrentPovemon = playerCurrentPovemon;
 	}
 }

@@ -16,7 +16,6 @@ public class Shop extends Entity implements AdditionalPovemonInfo, Utility {
 	public Shop(String name) {
 		super(name);
 		this.povemonList = new Vector<Povemon>();
-		generateShopList();
 		optionMap.put("1", new BuyPovemonOption());
 	    optionMap.put("2", new ExitShopOption());
 	    generateShopList();
@@ -82,7 +81,7 @@ public class Shop extends Entity implements AdditionalPovemonInfo, Utility {
 	    seeShop();
 	    String selectedName = promptPovemonName();
 	    if (selectedName.equalsIgnoreCase("0")) return;
-	    Povemon selected = findPovemonByName(selectedName);
+	    Povemon selected = Utility.findPovemonByName(povemonList, selectedName);
 	    if (selected == null) {
 	        System.out.println("Povémon not found! Please choose a valid one.");
 	        return;
@@ -94,15 +93,6 @@ public class Shop extends Entity implements AdditionalPovemonInfo, Utility {
 	    System.out.println(" Enter the name of the Povémon you want to buy [case insensitive, 0 to go back]: ");
 	    System.out.print(" >> ");
 	    return scan.nextLine();
-	}
-
-	private Povemon findPovemonByName(String name) {
-	    for (Povemon p : povemonList) {
-	        if (p.getName().equalsIgnoreCase(name)) {
-	            return p;
-	        }
-	    }
-	    return null;
 	}
 
 	private void processPurchase(Player player, Povemon p) {

@@ -37,12 +37,9 @@ public abstract class Person extends Entity {
 	}
 	
 	public void resetTeam() {
-		int len = this.getTeam().size();
-		for(int i = 0; i < len; i++) {
-			Povemon currentPovemon = this.getTeam().get(i);
-			currentPovemon.setCurrHp(currentPovemon.getHp());
-			currentPovemon.setIsAlive(true);
-		}
+	    for (Povemon povemon : this.team) {
+	        povemon.reset();
+	    }
 	}
 	
 	public abstract String voiceLines(Boolean isWinner);

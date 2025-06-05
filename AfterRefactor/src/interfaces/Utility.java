@@ -1,8 +1,9 @@
 package interfaces;
 
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
-
+import povemon.Povemon;
 public interface Utility {
 	Scanner scan = new Scanner(System.in);
 	
@@ -31,4 +32,13 @@ public interface Utility {
 	    System.out.println(" " + message);
 	    pressEnter();
 	}
+	
+	static Povemon findPovemonByName(List<Povemon> list, String name) {
+        for (Povemon p : list) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
 }
