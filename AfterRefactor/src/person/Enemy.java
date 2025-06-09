@@ -1,6 +1,8 @@
 package person;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.Vector;
 
 import interfaces.AdditionalPovemonInfo;
@@ -17,29 +19,31 @@ public class Enemy extends Person implements AdditionalPovemonInfo{
 		this.setMoney(BASE_MONEY + 1 + rand.nextInt(100));
 	}
 	
-	public static Enemy createEnemy(Player player){
-		int teamSize = player.getTeam().size();
-		String enemyName = enemyNameList[rand.nextInt(enemyNameList.length)];
-		Vector<Povemon> enemyTeam = new Vector<Povemon>();
-		for(int i = 0; i < teamSize; i++) {
-			String randomName = povemonNameList[rand.nextInt(povemonNameList.length)];
-			boolean isDuplicate = false;
-			for(Povemon p : enemyTeam) {
-	            if (p.getName().equals(randomName)) {
-	                isDuplicate = true;
-	                break;
-	            }
+	public static Enemy createEnemy(Player player) {
+	    String enemyName = getRandomEnemyName();
+	    Vector<Povemon> enemyTeam = generateEnemyTeam(player.getTeam().size());
+	    return new Enemy(enemyName, enemyTeam);
+	}
+
+	private static String getRandomEnemyName() {
+	    return enemyNameList[rand.nextInt(enemyNameList.length)];
+	}
+
+	private static Vector<Povemon> generateEnemyTeam(int teamSize) {
+	    Vector<Povemon> team = new Vector<>();
+	    Set<String> selectedNames = new HashSet<>();
+	    while (team.size() < teamSize) {
+	        String name = getRandomPovemonName();
+	        if (selectedNames.add(name)) {
+	            team.add(Povemon.createPovemon(name));
 	        }
-			if(!isDuplicate) {
-				Povemon newPovemon = Povemon.createPovemon(randomName);
-				enemyTeam.add(newPovemon);
-			}
-			else {				
-				i--;
-			}
-		}
-		Enemy enemy = new Enemy(enemyName, enemyTeam);
-		return enemy;
+	    }
+	    return team;
+	}
+
+	private static String getRandomPovemonName() {
+	    // Assume povemonNameList is accessible here or passed in
+	    return povemonNameList[rand.nextInt(povemonNameList.length)];
 	}
 
 	public String voiceLines(Player player) {

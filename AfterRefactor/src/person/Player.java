@@ -1,8 +1,6 @@
 package person;
 import java.util.Vector;
 
-import interfaces.Burnable;
-import interfaces.Poisonable;
 import interfaces.Utility;
 import povemon.Povemon;
 
@@ -15,7 +13,7 @@ public class Player extends Person implements Utility{
 	}
 
 	public Vector<Povemon> getPovemonList() {
-	    return new Vector<>(povemonList); 
+		return new Vector<>(povemonList); 
 	}
 
 	public void setPovemonList(Vector<Povemon> povemonList) {
@@ -24,7 +22,6 @@ public class Player extends Person implements Utility{
 	
 	public static Player createPlayer(String playerName, Vector<Povemon> playerTeam, Vector<Povemon> playerPovemonList) {
 		Player player = new Player(playerName, playerTeam, playerPovemonList);
-		
 		return player;
 	}
 
@@ -36,10 +33,7 @@ public class Player extends Person implements Utility{
 
 	@Override
 	public String voiceLines(Boolean isWinner) {
-		String line = "";
-		if(isWinner) line = "Victory is ours! Let’s keep this streak going!";
-		else line = "Ouch, that was rough...";
-		return line;
+	    return isWinner ? "Victory is ours! Let’s keep this streak going!" : "Ouch, that was rough...";
 	}
 	
 	private void seeTeam(Povemon currentInBattle) {
@@ -49,15 +43,14 @@ public class Player extends Person implements Utility{
 	    Utility.printBorder(70);
 	    for (int i = 0; i < this.getTeam().size(); i++) {
 	        Povemon current = this.getTeam().get(i);
-	        System.out.printf(" | %-20s | %-5s | %-15s | %-17s |\n", 
-        		 current.getName(), 
-    		    current.getType(), 
-    		    current.getBattleStatus(currentInBattle), 
-    		    current.getEffects());
+	        System.out.printf(" | %-20s | %-5s | %-15s | %-17s |\n", current.getName(), current.getType(), current.getBattleStatus(currentInBattle), current.getEffects());
 	        Utility.printBorder(70);
 	    }
 	}
 
+	private String formatPovemon(Povemon povemon, boolean useBrackets) {
+	    return povemon.getName() + (useBrackets ? " [" : " (") + povemon.getType() + (useBrackets ? "]" : ")");
+	}
 	
 	public void seeAllPovemon() {
 		Utility.printBorder(60);
@@ -65,60 +58,62 @@ public class Player extends Person implements Utility{
 	    Utility.printBorder(60);
 	    System.out.printf(" %-20s │ %-20s\n", "Current Team", "Povémon Storage");
 	    Utility.printBorder(60);
-
-	    int maxSize = Math.max(this.getTeam().size(), this.getPovemonList().size());
-
+	    int maxSize = Math.max(this.getTeam().size(), this.povemonList.size());
 	    for (int i = 0; i < maxSize; i++) {
-	        String teamPovemon = (i < this.getTeam().size()) 
-	            ? this.getTeam().get(i).getName() + " (" + this.getTeam().get(i).getType() + ")" 
-	            : "";
-	        
-	        String availablePovemon = (i < this.getPovemonList().size()) 
-	            ? this.getPovemonList().get(i).getName() + " [" + this.getPovemonList().get(i).getType() + "]" 
-	            : "";
-
-	        System.out.printf(" %-20s │ %-20s\n", teamPovemon, availablePovemon);
-	    }
+	    	String teamPovemon = (i < this.getTeam().size()) ? formatPovemon(this.getTeam().get(i), false) : "";
+	    	String availablePovemon = (i < this.povemonList.size()) ? formatPovemon(this.povemonList.get(i), true) : "";
+	        System.out.printf(" %-20s │ %-20s\n", teamPovemon, availablePovemon);}
 	    Utility.printBorder(60);
 	}
 
 
 	public Integer swapPovemon(Povemon currentInBattle) {
-	    boolean exit = false;
-	    Integer index = -1;
-	    
-	    while (!exit) {
+	    while (true) {
 	        this.seeTeam(currentInBattle);
 	        System.out.println(" Which Pokémon would you like to switch to battle? [case insensitive, 0 to go back]");
 	        System.out.print(" >> ");
-	        String inTeamName = scan.nextLine();
-	        if (inTeamName.equals("0")) {
-	            exit = true;
-	            continue; 
-	        }
-	        for (int i = 0; i < this.getTeam().size(); i++) {
-	        	if(this.getTeam().get(i).getName().equalsIgnoreCase(inTeamName)) {
-	        		index = i;
-	        		break;
-	        	}
-	        }
-	        if (index == -1) {
-	            System.out.println(" Invalid Choice!");
-	        } 
-	        else if (!this.getTeam().get(index).getIsAlive()) {
-	            System.out.printf(" %s is fainted, please choose another Pokémon!\n", this.getTeam().get(index).getName());
-	        } 
-	        else if (this.getTeam().get(index).getName().equalsIgnoreCase(currentInBattle.getName())) {
-	            System.out.printf(" %s is already in battle!\n", currentInBattle.getName());
-	        } 
-	        else {
-	            System.out.println(" Successfully swapped " + this.getTeam().get(index).getName() + " into battle!");
-	            exit = true;
-	            return index;
-	        }    
+	        String inTeamName = scan.nextLine().trim();
+	        if (inTeamName.equals("0")) return -1;
+	        Integer index = findTeamPovemonIndexByName(inTeamName);
+	        if (index == -1) {printInvalidChoice();
+	        } else if (!isPovemonAlive(index)) {printFaintedMessage(index);
+	        } else if (isSameAsCurrentBattle(index, currentInBattle)) {printAlreadyInBattleMessage(currentInBattle);
+	        } else {printSuccessSwap(index);return index;}
 	        Utility.pressEnter();
 	    }
+	}
+
+	private Integer findTeamPovemonIndexByName(String name) {
+	    for (int i = 0; i < this.getTeam().size(); i++) {
+	        if (this.getTeam().get(i).getName().equalsIgnoreCase(name)) {
+	            return i;
+	        }
+	    }
 	    return -1;
+	}
+
+	private boolean isPovemonAlive(int index) {
+	    return this.getTeam().get(index).getIsAlive();
+	}
+
+	private boolean isSameAsCurrentBattle(int index, Povemon current) {
+	    return this.getTeam().get(index).getName().equalsIgnoreCase(current.getName());
+	}
+
+	private void printInvalidChoice() {
+	    System.out.println(" Invalid Choice!");
+	}
+
+	private void printFaintedMessage(int index) {
+	    System.out.printf(" %s is fainted, please choose another Pokémon!\n", this.getTeam().get(index).getName());
+	}
+
+	private void printAlreadyInBattleMessage(Povemon current) {
+	    System.out.printf(" %s is already in battle!\n", current.getName());
+	}
+
+	private void printSuccessSwap(int index) {
+	    System.out.println(" Successfully swapped " + this.getTeam().get(index).getName() + " into battle!");
 	}
 	
 	public boolean leftAlive() {
@@ -136,56 +131,53 @@ public class Player extends Person implements Utility{
 	    System.out.print(" >> ");
 	    String name = scan.nextLine();
 	    if (name.equals("0")) return;
-	    Povemon selectedPovemon = Utility.findPovemonByName(this.getPovemonList(), name);
-	    if (selectedPovemon == null) {
-	        System.out.println(" This Povémon is not in your storage!");
-	        return;
-	    }
-	    if (this.getTeam().size() >= 4) {
-	        System.out.println(" Your team is full. Would you like to swap a Povémon?");
-	        System.out.println(" 1. Yes");
-	        System.out.println(" 2. No");
-	        System.out.print(" >> ");
-	        String choice = scan.nextLine();   
-	        if (choice.equals("1")) {
-	        	Utility.clearScreen();
-	            this.swapPovemonFromStorage();
-	            return;
-	        } else {
-	            System.out.println(" No Povémon were inserted into your team.");
-	            return;
-	        }
-	    }
+	    Povemon selectedPovemon = Utility.findPovemonByName(this.povemonList, name);
+	    if (selectedPovemon == null) {System.out.println(" This Povémon is not in your storage!");return;}
+	    if (this.getTeam().size() >= 4) {handleFullTeam();return;}
+	    addPovemonToTeam(selectedPovemon);
+	}
+
+	private void handleFullTeam() {
+	    System.out.println(" Your team is full. Would you like to swap a Povémon?");
+	    System.out.println(" 1. Yes");
+	    System.out.println(" 2. No");
+	    System.out.print(" >> ");
+	    String choice = scan.nextLine();
+	    if (choice.equals("1")) { Utility.clearScreen(); this.swapPovemonFromStorage();
+	    } else {System.out.println(" No Povémon were inserted into your team.");}
+	}
+
+	private void addPovemonToTeam(Povemon selectedPovemon) {
 	    this.getTeam().add(selectedPovemon);
-	    this.getPovemonList().remove(selectedPovemon);
+	    this.povemonList.remove(selectedPovemon);
 	    System.out.println(" Successfully inserted " + selectedPovemon.getName() + " into your team!");
 	}
 
 
 	public void swapPovemonFromStorage() {
 	    this.seeAllPovemon();
-	    System.out.println(" Which Povémon from your team would you like to swap with one from storage? [case insensitive, 0 to cancel]");
+	    Povemon teamPovemon = promptForPovemon( "Which Povémon from your team would you like to swap with one from storage? [case insensitive, 0 to cancel]", this.getTeam());
+	    if (teamPovemon == null) return;
+	    Povemon storagePovemon = promptForPovemon("Which Povémon from your storage would you like to insert? [case insensitive, 0 to cancel]",this.povemonList);
+	    if (storagePovemon == null) return;
+	    performSwap(teamPovemon, storagePovemon);
+	}
+
+	private Povemon promptForPovemon(String prompt, Vector<Povemon> list) {
+	    System.out.println(prompt);
 	    System.out.print(" >> ");
-	    String teamPovemonName = scan.nextLine().trim();
-	    if (teamPovemonName.equals("0")) return;
-	    Povemon teamPovemon = Utility.findPovemonByName(this.getPovemonList(), teamPovemonName);
-	    if (teamPovemon == null) {
-	        System.out.println(" This Povémon is not in your team.");
-	        return;
-	    }
-	    System.out.println(" Which Povémon from your storage would you like to insert? [case insensitive, 0 to cancel]");
-	    System.out.print(" >> ");
-	    String storagePovemonName = scan.nextLine().trim();
-	    if (storagePovemonName.equals("0")) return;
-	    Povemon storagePovemon = Utility.findPovemonByName(this.getPovemonList(), storagePovemonName);
-	    if (storagePovemon == null) {
-	        System.out.println(" This Povémon is not in your storage.");
-	        return;
-	    }
-	    this.getPovemonList().add(teamPovemon);
+	    String name = scan.nextLine().trim();
+	    if (name.equals("0")) return null;
+	    Povemon found = Utility.findPovemonByName(list, name);
+	    if (found == null) {System.out.println(list == this.getTeam() ? " This Povémon is not in your team.": " This Povémon is not in your storage.");}
+	    return found;
+	}
+
+	private void performSwap(Povemon teamPovemon, Povemon storagePovemon) {
+	    this.povemonList.add(teamPovemon);
 	    this.getTeam().remove(teamPovemon);
 	    this.getTeam().add(storagePovemon);
-	    this.getPovemonList().remove(storagePovemon);
+	    this.povemonList.remove(storagePovemon);
 	    System.out.println(" Successfully swapped " + teamPovemon.getName() + " with " + storagePovemon.getName());
 	}
 }

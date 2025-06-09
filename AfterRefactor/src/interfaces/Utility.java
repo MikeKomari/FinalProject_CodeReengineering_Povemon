@@ -1,7 +1,6 @@
 package interfaces;
 
 import java.util.List;
-import java.util.Random;
 import java.util.Scanner;
 import povemon.Povemon;
 public interface Utility {

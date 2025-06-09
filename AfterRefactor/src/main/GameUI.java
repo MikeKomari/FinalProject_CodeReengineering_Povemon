@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import interfaces.Utility;
+import menu.BattleData;
 import person.Enemy;
 import person.Player;
 import povemon.Povemon;
@@ -25,31 +26,46 @@ public class GameUI {
     }
    
     public void chooseStarter(Vector<Povemon> playerTeam, Vector<Povemon> playerPovemonList) {
-        Map<String, String> starterOptions = Map.of(
-            "1", "CharbolT",
-            "2", "AqualaSh",
-            "3", "TreethIng"
-        );
+        Map<String, String> starterOptions = getStarterOptions();
+
         while (true) {
             printStarterMenu();
-            System.out.print("\n Which Povémon will you choose?[1,2,3]: ");
-            String choose = Utility.scan.nextLine();
-            String selected = starterOptions.get(choose);
-            if (selected == null) {
-                System.out.println(" Invalid Choice!");
-                Utility.pressEnter();
-                continue;
-            }
-            Utility.clearScreen();
-            Povemon starter = Povemon.createPovemon(selected);
-            System.out.println("\n You chose " + starter.getName() + " as your starter!");
-            playerTeam.add(starter);
-            System.out.println(" Take good care of it, and embark on your adventure!");
-            Utility.pressEnter();
+            String choice = promptStarterChoice(starterOptions);
+            if (choice == null) continue;
+
+            handleStarterSelection(choice, playerTeam);
             break;
         }
     }
 
+    private Map<String, String> getStarterOptions() {
+        return Map.of(
+            "1", "CharbolT",
+            "2", "AqualaSh",
+            "3", "TreethIng"
+        );
+    }
+
+    private String promptStarterChoice(Map<String, String> options) {
+        System.out.print("\n Which Povémon will you choose?[1,2,3]: ");
+        String input = Utility.scan.nextLine();
+        if (!options.containsKey(input)) {
+            System.out.println(" Invalid Choice!");
+            Utility.pressEnter();
+            return null;
+        }
+        return options.get(input);
+    }
+
+    private void handleStarterSelection(String povemonName, Vector<Povemon> playerTeam) {
+        Utility.clearScreen();
+        Povemon starter = Povemon.createPovemon(povemonName);
+        System.out.println("\n You chose " + starter.getName() + " as your starter!");
+        playerTeam.add(starter);
+        System.out.println(" Take good care of it, and embark on your adventure!");
+        Utility.pressEnter();
+    }
+    
     private void printStarterMenu() {
         printBorder();
         System.out.println("        Choose Your Starter!         ");
@@ -115,19 +131,23 @@ public class GameUI {
 	    System.out.print(" >> ");
 	}
 	
-	public static void displayBattleScreen(Player player, Enemy enemy, Povemon playerCurrentPovemon, Povemon enemyCurrentPovemon) {
+	public static void displayBattleScreen(BattleData bd) {
 		System.out.println("\n ------------------------ Battle -----------------------");
-		System.out.printf(" |  Opponent: %-40s | \n", enemy.getName());
-		System.out.printf(" |  %-50s | \n", enemyCurrentPovemon.getName() + " ["+ enemyCurrentPovemon.getType()+ "]");
-		System.out.printf(" |  HP: %3d/%3d %38s | \n", enemyCurrentPovemon.getCurrHp(), enemyCurrentPovemon.getHp(), "");
+		System.out.printf(" |  Opponent: %-40s | \n", bd.getEnemy().getName());
+		System.out.printf(" |  %-50s | \n", bd.getEnemyCurrentPovemon().getName() + " ["+ bd.getEnemyCurrentPovemon().getType()+ "]");
+		System.out.printf(" |  HP: %3d/%3d %38s | \n", bd.getEnemyCurrentPovemon().getCurrHp(), bd.getEnemyCurrentPovemon().getHp(), "");
+		bitsEmoji();
+		System.out.printf(" |  Player  : %-40s | \n", bd.getPlayer().getName());
+		System.out.printf(" |  %-50s | \n", bd.getPlayerCurrentPovemon().getName() + " ["+ bd.getPlayerCurrentPovemon().getType()+ "]");
+		System.out.printf(" |  HP: %3d/%3d %38s | \n", bd.getPlayerCurrentPovemon().getCurrHp(), bd.getPlayerCurrentPovemon().getHp(), "");
+		userChoicesScreen();
+	}
+	
+	private static void bitsEmoji() {
 		System.out.println(" |                       (•ᴗ•)                         | ");
 		System.out.println(" |                                                     | ");
 		System.out.println(" |                                                     | ");
 		System.out.println(" |                      \\(O.O)/                        | ");
-		System.out.printf(" |  Player  : %-40s | \n", player.getName());
-		System.out.printf(" |  %-50s | \n", playerCurrentPovemon.getName() + " ["+ playerCurrentPovemon.getType()+ "]");
-		System.out.printf(" |  HP: %3d/%3d %38s | \n", playerCurrentPovemon.getCurrHp(), playerCurrentPovemon.getHp(), "");
-		userChoicesScreen();
 	}
 	
 	private static void userChoicesScreen() {

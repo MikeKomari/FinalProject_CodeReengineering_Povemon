@@ -1,7 +1,5 @@
 package menu;
 import interfaces.MenuAction;
-import other.Shop;
-import person.Player;
 import interfaces.Utility;
 import main.GameUI;
 public class ExitAction implements MenuAction {

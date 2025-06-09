@@ -7,6 +7,7 @@ import actions.RunAction;
 import actions.SwapAction;
 import interfaces.BattleAction;
 import interfaces.Utility;
+import menu.BattleData;
 import person.Enemy;
 import person.Person;
 import person.Player;
@@ -36,7 +37,6 @@ public class GameHandler {
 	
 	public boolean handlePlayerAction(String action, Player player, Enemy enemy) {
 		BattleAction selectedAction = actionMap.get(action);
-	    
 	    if (selectedAction != null) {
 	        return selectedAction.execute(player, enemy, this);
 	    } else {
@@ -49,14 +49,11 @@ public class GameHandler {
 	public void fight() {
 		if(getPlayerCurrentPovemon().getSpeed() >= getEnemyCurrentPovemon().getSpeed()) {
 			getPlayerCurrentPovemon().attack(getEnemyCurrentPovemon());
-			
 			if(getEnemyCurrentPovemon().getIsAlive()) {
 				getEnemyCurrentPovemon().attack(getPlayerCurrentPovemon());							
 			}
-		}
-		else {
+		}else {
 			getEnemyCurrentPovemon().attack(getPlayerCurrentPovemon());	
-			
 			if(getPlayerCurrentPovemon().getIsAlive()) {
 				getPlayerCurrentPovemon().attack(getEnemyCurrentPovemon());
 			}
@@ -66,29 +63,37 @@ public class GameHandler {
 	public void enterBattle(Player player) {
 	    boolean exitGame = false;
 	    while (!exitGame) {
-	    	Utility.clearScreen();
+	        prepareBattle(player);
 	        Enemy enemy = Enemy.createEnemy(player);
-	        player.resetTeam();
 	        setEnemyCurrentPovemon(enemy.getTeam().firstElement());
 	        setPlayerCurrentPovemon(player.getTeam().firstElement());
-	        boolean exitBattle = false;
-	        boolean firstTurn = true;
-	        while (!exitBattle) {
-	        	ui.displayBattleScreen(player, enemy, getPlayerCurrentPovemon(), getEnemyCurrentPovemon());
-	            if (firstTurn) {handleFirstTurn(player, enemy);firstTurn = false;}
-	            String winner = checkWinner();
-	            if (processBattleOutcome(player, enemy, winner)) {exitBattle = true;break;}
-	            String action = getPlayerAction();
-	            exitBattle = handlePlayerAction(action, player, enemy);
-	        }
+	        runBattleLoop(player, enemy);
 	        exitGame = !promptForNextBattle();
 	    }
+	}
+	
+	private void prepareBattle(Player player) {
+	    Utility.clearScreen();
+	    player.resetTeam();
+	}
+
+	private boolean runBattleLoop(Player player, Enemy enemy) {
+	    boolean exitBattle = false;
+	    boolean firstTurn = true;
+	    while (!exitBattle) {
+	        GameUI.displayBattleScreen(new BattleData(player, enemy, getPlayerCurrentPovemon(), getEnemyCurrentPovemon()));
+	        if (firstTurn) {handleFirstTurn(player, enemy);firstTurn = false;}
+	        String winner = checkWinner();
+	        if (processBattleOutcome(player, enemy, winner)) break;
+	        String action = getPlayerAction();
+	        exitBattle = handlePlayerAction(action, player, enemy);
+	    }
+	    return exitBattle;
 	}
 	
 	public void handleFirstTurn(Player player, Enemy enemy) {
 	    String playerLine = player.voiceLines(getPlayerCurrentPovemon());
 	    String enemyLine = enemy.voiceLines(player);
-
 	    if (!playerLine.isEmpty()) {
 	        System.out.printf(" %s: \"%s\"\n", enemy.getName(), enemyLine);
 	        System.out.printf(" %s: \"%s\"\n", player.getName(), playerLine);
@@ -98,13 +103,8 @@ public class GameHandler {
 	
 	public boolean processBattleOutcome(Player player, Enemy enemy, String winner) {
 	    if (winner.equals("none")) return false;
-
-	    if (winner.equals("player")) {
-	        battleConclusion(player, enemy);
-	    } 
-	    else {
-	        battleConclusion(enemy, player);
-	    }
+	    if (winner.equals("player")) {battleConclusion(player, enemy);} 
+	    else {battleConclusion(enemy, player);}
 	    Utility.pressEnter();
 	    return true;
 	}
@@ -114,13 +114,9 @@ public class GameHandler {
 	        player.seeAllPovemon();
 	        ui.showTeamModificationMenu();
 	        String choice = Utility.scan.nextLine();
-	        if (choice.equals("1")) {
-	            player.insertPovemon();
-	        } else if (choice.equals("2")) {
-	            break;
-	        } else {
-	            Utility.showError("Invalid Choice!");
-	        }
+	        if (choice.equals("1")) {player.insertPovemon();
+	        } else if (choice.equals("2")) {break;
+	        } else {Utility.showError("Invalid Choice!");}
 	        Utility.pressEnter();
 	    }
 	}

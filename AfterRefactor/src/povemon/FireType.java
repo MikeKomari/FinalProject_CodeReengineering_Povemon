@@ -14,6 +14,5 @@ public class FireType extends Povemon implements Poisonable{
 		if(isPoisoned) {
 			this.damaged("poisoned", basePoisonDamage);
 		}
-		
 	}
 }

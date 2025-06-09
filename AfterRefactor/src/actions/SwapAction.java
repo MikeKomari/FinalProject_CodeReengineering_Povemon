@@ -4,7 +4,6 @@ import interfaces.BattleAction;
 import main.GameHandler;
 import person.Enemy;
 import person.Player;
-import povemon.Povemon;
 
 public class SwapAction implements BattleAction {
     @Override

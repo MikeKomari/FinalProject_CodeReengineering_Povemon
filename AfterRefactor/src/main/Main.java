@@ -8,8 +8,6 @@ import interfaces.AdditionalPovemonInfo;
 import interfaces.Utility;
 import interfaces.MenuAction;
 import other.Shop;
-import person.Enemy;
-import person.Person;
 import person.Player;
 import povemon.Povemon;
 
@@ -33,12 +31,7 @@ public class Main implements AdditionalPovemonInfo, Utility{
 		Vector<Povemon> playerPovemonList = new Vector<Povemon>();
 		String playerName = ui.greetingsMenu_Introduction();
 		ui.chooseStarter(playerTeam, playerPovemonList);
-		
 		player = Player.createPlayer(playerName, playerTeam, playerPovemonList);
-		
-		if(player.getName().equals("OV") || player.getName().equals("Octa")) {
-			player.setMoney(9999);
-		}
 	}
 	
 	private void setupMenuActions() {
@@ -57,16 +50,9 @@ public class Main implements AdditionalPovemonInfo, Utility{
 			ui.mainMenu(player.getName());
 			String input = scan.nextLine();
 			MenuAction action = menuActions.get(input);
-			if (action != null) {
-				action.execute();
-				if (action instanceof ExitAction) {
-					exit = true;
-				}
-			} else {
-				System.out.println(" Invalid Input!");
-				Utility.pressEnter();
-			}
-		}
+			if (action != null) {action.execute();
+				if (action instanceof ExitAction) {exit = true;}
+			} else {System.out.println(" Invalid Input!");Utility.pressEnter();}}
 	}
 	
 	public static void main(String[] args) {

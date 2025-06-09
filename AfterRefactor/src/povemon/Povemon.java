@@ -178,26 +178,17 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
         target.damaged(damage);
         if (this.type.equals(GRASS) && target instanceof Poisonable) {
             Poisonable poisonableTarget = (Poisonable) target;
-            if (Math.random() < 0.3) { 
-                poisonableTarget.poisoned(true);
-            }
-        } 
-        else if (this.type.equals(FIRE) && target instanceof Burnable) {
+            if (Math.random() < 0.3) { poisonableTarget.poisoned(true); }
+        } else if (this.type.equals(FIRE) && target instanceof Burnable) {
             Burnable burnableTarget = (Burnable) target;
-            if (Math.random() < 0.5) {
-                burnableTarget.burned(true);
-            }
+            if (Math.random() < 0.5) { burnableTarget.burned(true);}
         }
     }
 
     private int calculateDamage(Povemon target) {
 	    int damage = this.attack;
-	    if (target.getType().equals(this.weakness)) {
-	    	damage /= 2;
-	    } 
-	    else if (target.getWeakness().equals(this.type)) {
-	    	damage *= 2; 
-	    }
+	    if (target.getType().equals(this.weakness)) {damage /= 2;} 
+	    else if (target.getWeakness().equals(this.type)) {damage *= 2; }
 	    return damage;
     }
 
@@ -222,7 +213,6 @@ public abstract class Povemon extends Entity implements AdditionalPovemonInfo{
                 break;
             }
         }
-        
         return index;
     }
      

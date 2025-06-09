@@ -1,7 +1,6 @@
 package menu;
 import main.GameHandler;
 import person.Player;
-import interfaces.Utility;
 import interfaces.MenuAction;
 public class ModifyTeamAction implements MenuAction {
     private GameHandler gameHandler;
